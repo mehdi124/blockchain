@@ -27,4 +27,7 @@ func NewBlock(data string,prevBlockHash []byte) *Block{
 	return &block
 }
 
+func NewGensisBlock() *Block{
+	return NewBlock("New Gensis Block",[]byte{})
+}
 

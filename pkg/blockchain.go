@@ -14,10 +14,6 @@ func (bc *Blockchain) GetBlocks() []*Block{
 	return bc.blocks
 }
 
-func NewGensisBlock() *Block{
-	return NewBlock("New Gensis Block",[]byte{})
-}
-
 
 func NewBlockchain() *Blockchain {
 	return &Blockchain{ []*Block{NewGensisBlock()} }
