@@ -1,27 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"blockchain_go_v2/pkg"
-	"strconv"
 )
 
 func main(){
 
 	bc := pkg.NewBlockchain()
+	defer bc.DB.Close()
 
-	bc.AddBlock("Send 1 BTC to Ivan")
-	bc.AddBlock("Send 2 more BTC to Ivan")
-
-	blocks := bc.GetBlocks()
-
-	for _, block := range blocks {
-		fmt.Printf("Prev. hash: %x\n", block.PrevBlockHash)
-		fmt.Printf("Data: %s\n", block.Data)
-		fmt.Printf("Hash: %x\n", block.Hash)
-		pow := pkg.NewProofOfWork(block)
-		fmt.Printf("PoW: %s\n", strconv.FormatBool(pow.Validate()))
-		fmt.Println()
-	}
+	cli := pkg.CLI{bc}
+	cli.Run()
 
 }

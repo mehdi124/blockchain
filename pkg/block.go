@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"strconv"
 	"time"
+	"encoding/gob"
 )
 
 type Block struct {
@@ -33,7 +34,23 @@ func NewBlock(data string,prevBlockHash []byte) *Block{
 	return &block
 }
 
-func NewGensisBlock() *Block{
+func NewGenesisBlock() *Block{
 	return NewBlock("New Gensis Block",[]byte{})
 }
+
+func (b *Block) Serialize() []byte {
+
+	var result bytes.Buffer
+	encoder := gob.NewEncoder(&result)
+	encoder.Encode(b)
+	return result.Bytes()
+}
+
+func DeserializeBlock(d []byte) *Block{
+	var block Block
+	decoder := gob.NewDecoder(bytes.NewReader(d))
+	decoder.Decode(&block)
+	return &block
+}
+
 
