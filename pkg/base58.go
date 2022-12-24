@@ -1,5 +1,10 @@
 package pkg
 
+import (
+	"bytes"
+	"math/big"
+)
+
 var b58Alphabet = []byte("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz")
 
 
@@ -47,7 +52,7 @@ func Base58Decode(input []byte) []byte {
 	}
 
 	payload := input[zeroBytes:]
-	for _,b := payload {
+	for _,b := range payload {
 		charIndex := bytes.IndexByte(b58Alphabet, b)
 		result.Mul(result, big.NewInt(58))
 		result.Add(result, big.NewInt(int64(charIndex)))

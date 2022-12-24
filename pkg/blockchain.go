@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"bytes"
 	"crypto/ecdsa"
+	"errors"
 )
 
 type Blockchain struct {
@@ -15,10 +16,6 @@ type Blockchain struct {
 	DB *bolt.DB
 }
 
-type BlockchainIterator struct {
-	currentHash []byte
-	db *bolt.DB
-}
 
 const dbFile = "blockchain.db"
 const blocksBucket = "blocks"
@@ -28,7 +25,7 @@ const genesisCoinbaseData = "The Times 03/Jan/2009 Chancellor on brink of second
 
 func (bc *Blockchain) Iterator() *BlockchainIterator {
 
-	bci := &BlockchainIterator{currentHash:bc.Tip,db:bc.DB}
+	bci := &BlockchainIterator{currentHash:bc.Tip,DB:bc.DB}
 	return bci
 }
 
@@ -117,27 +114,6 @@ func CreateBlockchain(address string) *Blockchain {
 
 }
 
-func (bci *BlockchainIterator) Next() *Block {
-
-	var block *Block
-	err := bci.db.View(func(tx *bolt.Tx) error {
-
-		b := tx.Bucket([]byte(blocksBucket))
-		encodedBlock := b.Get(bci.currentHash)
-		block = DeserializeBlock(encodedBlock)
-		return nil
-
-	})
-
-	if err != nil {
-		log.Panic(err)
-	}
-
-	bci.currentHash = block.PrevBlockHash
-	return block
-
-}
-
 func (bc *Blockchain) FindUnspentTransactions(pubKeyHash []byte) []Transaction{
 	var unspentTXs []Transaction
 	spentTxOs := make( map[string][] int )
@@ -201,10 +177,10 @@ func (bc *Blockchain) FindUTXO(pubKeyHash []byte) []TXOutput {
 
 	var UTXOs []TXOutput
 
-	unspentTransactions := bc.FindUnspentTransactions(address)
+	unspentTransactions := bc.FindUnspentTransactions(pubKeyHash)
 	for _,tx := range unspentTransactions{
 		for _,out := range tx.Vout{
-			if out.CanBeUnlockedWith(address){
+			if out.IsLockedWithKey(pubKeyHash){
 				UTXOs = append(UTXOs,out)
 			}
 		}
@@ -228,7 +204,7 @@ func (bc *Blockchain) FindSpendableOutputs(pubKeyHash []byte,amount int)(int,map
 
 			for outIdx,out := range tx.Vout{
 
-				if out.CanBeUnlockedWith(address) && accumulated < amount {
+				if out.IsLockedWithKey(pubKeyHash) && accumulated < amount {
 
 					accumulated += out.Value
 					unspentOutputs[txID] = append(unspentOutputs[txID],outIdx)

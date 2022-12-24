@@ -7,12 +7,10 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"math/big"
-
 	"encoding/gob"
 	"encoding/hex"
 	"fmt"
 	"log"
-	"strings"
 )
 
 type Transaction struct {
@@ -31,9 +29,9 @@ func NewCoinbaseTX(to,data string) *Transaction {
 		data = fmt.Sprintf("Reward to '%s'", to)
 	}
 
-	txin := TXInput{ []byte{},-1,data }
-	txout := TXOutput{subsidy,to}
-	tx := Transaction{nil,[]TXInput{txin},[]TXOutput{txout}}
+	txin := TXInput{ []byte{},-1,nil,[]byte(data) }
+	txout := NewTXOutput(subsidy,to)
+	tx := Transaction{nil,[]TXInput{txin},[]TXOutput{*txout}}
 	tx.SetID()
 	return &tx
 }
@@ -55,15 +53,6 @@ func (tx *Transaction) SetID() {
 
 func (tx *Transaction) IsCoinbase() bool {
 	return len(tx.Vin) == 1 && len(tx.Vin[0].Txid) == 0 && tx.Vin[0].Vout == -1
-}
-
-
-func (in *TXInput) CanUnlockOutputWith(unlockingData string) bool {
-	return in.ScriptSig == unlockingData
-}
-
-func (out *TXOutput) CanBeUnlockedWith(unlockingData string) bool {
-	return out.ScriptPubKey == unlockingData
 }
 
 
@@ -96,7 +85,7 @@ func NewUTXOTransaction(from,to string,amount int,bc *Blockchain) *Transaction {
 
 		for _,out := range outs {
 			input := TXInput{ Txid:txID , Vout:out , Signature:nil , PubKey:wallet.PublicKey }
-			inputs := append(inputs,input)
+			inputs = append(inputs,input)
 		}
 	}
 
